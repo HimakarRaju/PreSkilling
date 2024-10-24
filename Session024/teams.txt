@@ -1,0 +1,47 @@
+Take the current datasets that are there with us and come up with optimizations for the analysis to be performed
+
+team  1
+ Jayanth 
+Swarup 
+Surendra 
+enouch 
+Madhu
+
+team  2
+ganesh 
+Chandra shaker 
+akash
+nitish 
+shashileka
+
+team 3
+
+mounnika 
+hyndavi
+bhargavi 
+bhargavi
+hindusri
+
+team 4
+dhansree
+gouri
+shiva
+blessy
+thilak 
+
+team 5
+ Keerthi 
+Pavitra 
+Sowmya 
+saleem 
+Janardhan 
+
+team 6
+himakr 
+mahendra 
+Bharathi 
+deva 
+pawan 
+
+
+

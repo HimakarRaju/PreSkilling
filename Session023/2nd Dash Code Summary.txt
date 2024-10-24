@@ -1,0 +1,100 @@
+Here's a simple flowchart and explanation of the provided code for a Tkinter-based data analysis application.
+
+### Flowchart Overview
+```plaintext
++-------------------------+
+|      Start App         |
++-------------------------+
+            |
+            v
++-------------------------+
+|  Display File Selection |
+|       and Buttons       |
++-------------------------+
+            |
+            v
++-------------------------+
+|   Select Files Button   | <-- User Clicks
++-------------------------+
+            |
+            v
++-------------------------+
+|  Show Selected Files in |
+|      TreeView           |
++-------------------------+
+            |
+            v
++-------------------------+
+| Analyze Files Button    | <-- User Clicks
++-------------------------+
+            |
+            v
++-------------------------+
+|   For Each File:       |
+|   - Read File          |
+|   - Display Info       |
+|   - Plot Data          |
+|   - Calculate Stats     |
++-------------------------+
+            |
+            v
++-------------------------+
+|   Display Results in    |
+|  TreeView and Plot Area |
++-------------------------+
+            |
+            v
++-------------------------+
+|    Process Queue for    |
+|   Messages/Errors       |
++-------------------------+
+            |
+            v
++-------------------------+
+|   User Double Clicks    | <-- User Double Clicks
+|   on File in TreeView   |
++-------------------------+
+            |
+            v
++-------------------------+
+|   Re-analyze Selected   |
+|         File            |
++-------------------------+
+            |
+            v
++-------------------------+
+|        End App          |
++-------------------------+
+```
+
+### Code Explanation
+
+1. **Imports and Class Definition**:
+   - The code imports necessary libraries for GUI creation (`tkinter`), file handling, data analysis (`pandas`), threading, and plotting (`matplotlib`, `seaborn`).
+   - The `DataAnalyzerApp` class encapsulates the application's functionality.
+
+2. **Initialization**:
+   - The constructor (`__init__`) sets up the main window, title, buttons for selecting and analyzing files, a tree view for displaying files, and a scrolled text area for displaying error messages.
+
+3. **File Selection**:
+   - The `select_files` method uses a file dialog to let users choose CSV or Excel files. Selected file names are displayed in the tree view, and their paths are stored in a dictionary.
+
+4. **File Analysis**:
+   - The `analyze_files` method checks for selected files and starts a separate thread for each file to analyze it using `analyze_file`.
+
+5. **File Analysis Logic**:
+   - In `analyze_file`, the method reads the file (CSV or Excel) into a DataFrame, then gathers and sends the shape and column types back to the main thread through a queue.
+   - It calculates detailed statistics for numerical columns using the `calculate_detailed_statistics` method.
+   - The data is plotted using `plot_data`, which creates various visualizations (histograms, box plots, scatter plots, and 3D scatter plots) in a dedicated plot area.
+
+6. **Queue Processing**:
+   - The `process_queue` method runs periodically to check for new messages in the queue and update the tree view and error display accordingly.
+
+7. **Double Click Event**:
+   - The `on_node_double_click` method allows users to double-click a file in the tree view to trigger its analysis again.
+
+8. **Main Loop**:
+   - The application is run in the main loop, which keeps the window active and responsive.
+
+### Summary
+This code creates a data analysis application with a user-friendly interface. Users can select data files, analyze them, view summary statistics, and visualize the data, all within a graphical environment. The use of threading ensures the GUI remains responsive while processing files.

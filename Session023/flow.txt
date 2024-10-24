@@ -1,0 +1,56 @@
+# Ideas for fixing the code
+1. Understand what the code is doing and its flow of execution
+2. Understand the function calls where they are getting used
+3. Add condition to check if a file is already analysed
+4. Check which part of the code is generating the bugs/Issues and start fixing the code
+
+# Flow of code
+
+1. Initialised the Tkinter
+2. Calling DataAnalyzerApp() function
+    1. **init method()**
+       1. Initialises the App with base variables[ panels,threading,treeview etc ]
+    2. **select_files()**
+       1. It allows to user to select files by opening file dialogue[panel]
+       2. Inserts the filename to the tree view using dictionary
+    3. **analyze_files()**
+       1. It checks if any file in file_paths
+       2. If file is present it passes it to analyze_file() -> with file_path and file_name as parameters
+          having its own thread else it exits
+    4. **analyse_file()**
+       1. Reads the data according to the extension type and stores it to df
+       2. Logs the shape of the df
+       `
+          shape_info captures the shape (no. of rows and columns) of the df and puts it in the queue for display
+          column_info creates a dictionary with each column name and its data type, then sends this information to
+          the queue.
+       `
+       3. Logs the column details of the df as dictionary with [node]column_name and datatype
+       4. Calling the calculate_detailed_statistics() -> with df and node as the parameters
+       5. Plots the data taking df and node as parameters
+       6. __*most relevant columns : feature to add*__
+       
+    5. calculate_detailed_statistics()
+       1. It selects/gets the numerical columns from the df
+       2. Then transposes the describe() functions output data for better readability [Just for debug and data understanding]
+       3. Calculate the statistics for each numerical column using for loop 
+          result include mean, median, mode, standard_deviation
+    6. **plot_data()**
+       1. Clearing previous plots
+       2. Gets numerical column and categorical cols[just to check for cat_cols]
+       3. We are using grid and subplot of 2x2 to plot 4 plots in a single window/widget
+       4. We are using seaborn hist plot to plot histograms for first 4 numerical columns
+       5. Then we are plotting boxplot on first numerical column
+       6. Then we are scatterplot first two numerical columns
+       7. Then we are plotting 3D scatterplot on first 3 numerical columns
+       8. Then we are using canvas of tkinter to display the plots
+       9. For resizing the canvas widget we are using get_tk_widget().pack(fill=tk.BOTH, expand=True)
+       10. After the widget plots the fig initialised for plotting is closed/stopped
+    7. **process_queue()**
+       1. This is used to load each thread in a sequential order to avoid LOCKUP
+       2. It also displays in the error textbox
+    8. **on_node_double_click(self, event)**
+       1. This is an event handler function which runs on the tkinter treeview panel
+       2. This gets the index of the target clicked
+       3. Sets the file_path to the target
+       4. Runs the analyse() function on the target
