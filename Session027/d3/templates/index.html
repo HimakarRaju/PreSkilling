@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Graphs Showcase</title>
+    <script src="{{ url_for('static', filename='d3.v7.min.js') }}"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .chart {
+            margin-bottom: 50px;
+        }
+        svg {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>D3.js Graphs Showcase</h1>
+
+    <label for="chartType">Choose Chart Type:</label>
+    <select id="chartType">
+        <option value="bar">Bar Chart</option>
+        <option value="line">Line Chart</option>
+        <option value="pie">Pie Chart</option>
+        <option value="scatter">Scatter Plot</option>
+        <option value="area">Area Chart</option>
+        <option value="tree">Organizational Tree</option> <!-- Added for Tree Chart -->
+    </select>
+
+    <label for="colorScheme">Choose Color Scheme:</label>
+    <select id="colorScheme">
+        <option value="schemeCategory10">Category 10</option>
+        <option value="schemeAccent">Accent</option>
+        <option value="schemeSet2">Set 2</option>
+        <option value="schemeDark2">Dark 2</option>
+    </select>
+
+    <button id="drawChart">Draw Chart</button>
+
+    <div class="chart" id="chart"></div>
+
+    <script>
+        const sampleData = {
+            bar: [30, 80, 45, 60, 20, 90, 55],
+            line: [
+                {x: 0, y: 30},
+                {x: 1, y: 80},
+                {x: 2, y: 45},
+                {x: 3, y: 60},
+                {x: 4, y: 20},
+                {x: 5, y: 90},
+                {x: 6, y: 55},
+            ],
+            pie: [10, 20, 30, 40],
+            scatter: [
+                {x: 30, y: 30}, {x: 50, y: 90},
+                {x: 70, y: 50}, {x: 90, y: 80},
+                {x: 110, y: 30}, {x: 130, y: 70}
+            ],
+            area: [
+                {x: 0, y: 30},
+                {x: 1, y: 80},
+                {x: 2, y: 45},
+                {x: 3, y: 60},
+                {x: 4, y: 20},
+                {x: 5, y: 90},
+                {x: 6, y: 55},
+            ],
+        };
+
+        document.getElementById("drawChart").onclick = function() {
+            const chartType = document.getElementById("chartType").value;
+            const colorScheme = document.getElementById("colorScheme").value;
+            drawChart(chartType, colorScheme);
+        };
+
+        function drawChart(type, scheme) {
+            d3.select("#chart").selectAll("*").remove();  // Clear previous chart
+            const width = 500, height = 300;
+
+            const color = d3.scaleOrdinal(d3[scheme]);
+
+            if (type === 'bar') {
+                const svg = d3.select("#chart").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                svg.selectAll("rect")
+                    .data(sampleData.bar)
+                    .enter()
+                    .append("rect")
+                    .attr("width", (d) => d * 5)
+                    .attr("height", 40)
+                    .attr("y", (d, i) => i * 50)
+                    .attr("fill", color(0));
+            } else if (type === 'line') {
+                const svg = d3.select("#chart").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                const line = d3.line()
+                    .x(d => d.x * 70)
+                    .y(d => height - d.y * 3);
+
+                svg.append("path")
+                    .datum(sampleData.line)
+                    .attr("fill", "none")
+                    .attr("stroke", color(0))
+                    .attr("stroke-width", 2)
+                    .attr("d", line);
+            } else if (type === 'pie') {
+                const radius = Math.min(width, height) / 2;
+                const svg = d3.select("#chart").append("svg")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .append("g")
+                    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+                const pie = d3.pie();
+                const arc = d3.arc().innerRadius(0).outerRadius(radius);
+
+                svg.selectAll("arc")
+                    .data(pie(sampleData.pie))
+                    .enter()
+                    .append("g")
+                    .attr("class", "arc")
+                    .append("path")
+                    .attr("d", arc)
+                    .attr("fill", (d, i) => color(i));
+            } else if (type === 'scatter') {
+                const svg = d3.select("#chart").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                svg.selectAll("circle")
+                    .data(sampleData.scatter)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => height - d.y)
+                    .attr("r", 5)
+                    .attr("fill", color(0));
+            } else if (type === 'area') {
+                const svg = d3.select("#chart").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                const area = d3.area()
+                    .x(d => d.x * 70)
+                    .y0(height)
+                    .y1(d => height - d.y * 3);
+
+                svg.append("path")
+                    .datum(sampleData.area)
+                    .attr("fill", color(0))
+                    .attr("d", area);
+            } else if (type === 'tree') {
+                const treeData = {
+                    name: "Root",
+                    children: [
+                        {
+                            name: "Child 1",
+                            children: [
+                                { name: "Grandchild 1" },
+                                { name: "Grandchild 2" }
+                            ]
+                        },
+                        {
+                            name: "Child 2",
+                            children: []
+                        }
+                    ]
+                };
+
+                const treeWidth = 400;
+                const treeHeight = 300;
+
+                const treeSvg = d3.select("#chart").append("svg")
+                    .attr("width", treeWidth)
+                    .attr("height", treeHeight);
+
+                const root = d3.hierarchy(treeData);
+                const treeLayout = d3.tree().size([treeHeight, treeWidth - 100]);
+
+                treeLayout(root);
+
+                treeSvg.selectAll(".link")
+                    .data(root.links())
+                    .enter()
+                    .append("line")
+                    .attr("class", "link")
+                    .attr("x1", d => d.source.y)
+                    .attr("y1", d => d.source.x)
+                    .attr("x2", d => d.target.y)
+                    .attr("y2", d => d.target.x)
+                    .attr("stroke", color(0));
+
+                treeSvg.selectAll(".node")
+                    .data(root.descendants())
+                    .enter()
+                    .append("circle")
+                    .attr("class", "node")
+                    .attr("cx", d => d.y)
+                    .attr("cy", d => d.x)
+                    .attr("r", 5)
+                    .attr("fill", color(0));
+
+                treeSvg.selectAll(".text")
+                    .data(root.descendants())
+                    .enter()
+                    .append("text")
+                    .attr("x", d => d.y)
+                    .attr("y", d => d.x)
+                    .text(d => d.data.name)
+                    .attr("dy", 3)
+                    .attr("dx", 5);
+            }
+        }
+    </script>
+</body>
+</html>

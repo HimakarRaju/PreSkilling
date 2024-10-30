@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chord Diagram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <svg width="600" height="600"></svg>
+    <script>
+        const data = {
+            matrix: [
+                [11975, 5870, 8916, 2868],
+                [1951, 10000, 3000, 5000],
+                [3521, 1000, 10000, 5000],
+                [1118, 1100, 1400, 12000]
+            ],
+            names: ["A", "B", "C", "D"]
+        };
+
+        const width = 600, height = 600;
+        const outerRadius = width / 2 - 10;
+        const innerRadius = outerRadius - 24;
+
+        const chord = d3.chord().padAngle(0.05).sortSubgroups(d3.descending);
+        const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+        const ribbon = d3.ribbon().radius(innerRadius);
+
+        const svg = d3.select("svg").append("g").attr("transform", `translate(${width / 2}, ${height / 2})`);
+        const chords = chord(data.matrix);
+
+        svg.append("g")
+            .selectAll("g")
+            .data(chords.groups)
+            .enter().append("g")
+            .append("path")
+            .style("fill", (d, i) => d3.schemeCategory10[i])
+            .attr("d", arc);
+
+        svg.append("g")
+            .selectAll("g")
+            .data(chords)
+            .enter().append("path")
+            .attr("d", ribbon)
+            .style("fill", d => d3.schemeCategory10[d.source.index])
+            .style("opacity", 0.67);
+    </script>
+</body>
+</html>

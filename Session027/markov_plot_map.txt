@@ -1,0 +1,107 @@
+import csv
+import random
+import datetime
+from geopy.distance import geodesic
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+
+# Define the CSV file path
+CSV_FILE = "marine_animal_tracking_markov.csv"
+
+# Define possible zones within the North Atlantic with coordinates and transition probabilities
+zones = {
+    "Zone1": {"coords": (27.0, -60.0), "transitions": {"Zone1": 0.6, "Zone2": 0.3, "Zone3": 0.1}},
+    "Zone2": {"coords": (30.0, -55.0), "transitions": {"Zone1": 0.3, "Zone2": 0.5, "Zone3": 0.2}},
+    "Zone3": {"coords": (28.0, -65.0), "transitions": {"Zone1": 0.2, "Zone2": 0.2, "Zone3": 0.6}}
+}
+
+# Define animals with starting zones
+animals = {"Dolphin": "Zone1", "Shark": "Zone2", "Whale": "Zone3", "Seal": "Zone1"}
+
+# Generate mock data using Markov Chain for tracking
+def generate_markov_data(num_entries=10):
+    # Define CSV header
+    header = ["AnimalID", "Timestamp", "Latitude", "Longitude", "Status"]
+
+    with open(CSV_FILE, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        
+        # Generate data for each animal
+        for _ in range(num_entries):
+            for animal, current_zone in animals.items():
+                # Select the next zone based on transition probabilities
+                next_zone = select_next_zone(current_zone)
+                animals[animal] = next_zone  # Update current zone
+                coords = zones[next_zone]["coords"]
+                timestamp = datetime.datetime.now().isoformat()
+                status = random.choice(["Healthy", "Minor Injury", "Critical"])
+                writer.writerow([animal, timestamp, coords[0], coords[1], status])
+
+# Function to select the next zone based on transition probabilities
+def select_next_zone(current_zone):
+    transitions = zones[current_zone]["transitions"]
+    zones_list, probabilities = zip(*transitions.items())
+    return random.choices(zones_list, probabilities)[0]
+
+# Load tracking data from CSV
+def load_data():
+    data = []
+    with open(CSV_FILE, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row)
+    return data
+
+# Plot movement paths on North Atlantic Ocean map
+def plot_paths_on_map():
+    data = load_data()
+    animal_paths = {}
+
+    # Organize data by animal
+    for entry in data:
+        animal_id = entry["AnimalID"]
+        coords = (float(entry["Latitude"]), float(entry["Longitude"]))
+        if animal_id not in animal_paths:
+            animal_paths[animal_id] = []
+        animal_paths[animal_id].append(coords)
+
+    # Set up the map centered on the North Atlantic Ocean
+    plt.figure(figsize=(12, 10))
+    m = Basemap(
+        projection="merc",
+        llcrnrlat=10,
+        urcrnrlat=50,
+        llcrnrlon=-80,
+        urcrnrlon=-30,
+        resolution="i"
+    )
+    m.drawcoastlines()
+    m.drawcountries()
+    m.fillcontinents(color="lightgray", lake_color="aqua")
+    m.drawmapboundary(fill_color="aqua")
+    m.drawparallels(range(10, 51, 10), labels=[1, 0, 0, 0])
+    m.drawmeridians(range(-80, -29, 10), labels=[0, 0, 0, 1])
+
+    # Colors for each animal path
+    colors = ["b", "g", "r", "c", "m", "y", "k"]
+
+    # Plot each animal's path
+    for i, (animal, path) in enumerate(animal_paths.items()):
+        lats, longs = zip(*path)  # Separate latitudes and longitudes
+        x, y = m(longs, lats)
+        m.plot(x, y, marker="o", color=colors[i % len(colors)], label=f"{animal} Path")
+        m.plot(x[0], y[0], marker="s", color="black", markersize=8, label=f"{animal} Start")
+        m.plot(x[-1], y[-1], marker="X", color="red", markersize=8, label=f"{animal} End")
+
+    plt.title("Movement Paths of Marine Animals in the North Atlantic Ocean")
+    plt.legend(loc="upper right")
+    plt.show()
+
+# Main function to demonstrate program functionality
+def main():
+    generate_markov_data()  # Generate mock data using Markov Chain
+    plot_paths_on_map()  # Plot movement paths on North Atlantic map
+
+if __name__ == "__main__":
+    main()

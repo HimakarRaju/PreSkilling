@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive D3.js Charts</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 10px;
+            display: inline-block;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 5px;
+        }
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+        .arc text {
+            font-size: 12px;
+            text-anchor: middle;
+        }
+        .axis--x path {
+            display: none;
+        }
+        .node circle {
+            cursor: pointer;
+        }
+        .node text {
+            font: 12px sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="tab" onclick="showTab('org-tree')">Org Tree</div>
+        <div class="tab" onclick="showTab('sunburst')">Sunburst</div>
+        <div class="tab" onclick="showTab('bar-chart')">Bar Chart</div>
+        <div class="tab" onclick="showTab('line-chart')">Line Chart</div>
+        <div class="tab" onclick="showTab('pie-chart')">Pie Chart</div>
+    </div>
+
+    <div id="org-tree" class="tab-content"></div>
+    <div id="sunburst" class="tab-content"></div>
+    <div id="bar-chart" class="tab-content"></div>
+    <div id="line-chart" class="tab-content"></div>
+    <div id="pie-chart" class="tab-content"></div>
+
+    <script>
+        function showTab(tabName) {
+            d3.selectAll('.tab-content').style('display', 'none');
+            d3.select(`#${tabName}`).style('display', 'block');
+            if (tabName === 'org-tree') drawOrgTree();
+            else if (tabName === 'sunburst') drawSunburst();
+            else if (tabName === 'bar-chart') drawBarChart(barData);
+            else if (tabName === 'line-chart') drawLineChart(lineData);
+            else if (tabName === 'pie-chart') drawPieChart(pieData);
+        }
+
+        // Sample Data for Organizational Tree
+        const orgData = {
+            name: "CEO",
+            children: [
+                { name: "VP of Marketing", children: [{ name: "Marketing Manager" }] },
+                { name: "VP of Sales", children: [{ name: "Sales Manager" }] },
+            ],
+        };
+
+        let root;
+
+        // Draw Organizational Tree
+        function drawOrgTree() {
+            const margin = { top: 20, right: 120, bottom: 20, left: 120 },
+                width = 600 - margin.right - margin.left,
+                height = 400 - margin.top - margin.bottom;
+
+            d3.select("#org-tree").selectAll("svg").remove(); // Clear previous SVG
+
+            const svg = d3.select("#org-tree").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const treeLayout = d3.tree().size([height, width]);
+            root = d3.hierarchy(orgData);
+            treeLayout(root);
+
+            const link = svg.selectAll(".link")
+                .data(root.links())
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkVertical()
+                    .x(d => d.y)
+                    .y(d => d.x))
+                .style("fill", "none")
+                .style("stroke", "#ccc");
+
+            const node = svg.selectAll(".node")
+                .data(root.descendants())
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`)
+                .on("click", function(event, d) {
+                    d.children = d.children ? null : d._children;
+                    drawOrgTree();
+                })
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("circle")
+                .attr("r", 10)
+                .style("fill", "#fff")
+                .style("stroke", "steelblue")
+                .style("stroke-width", "2px")
+                .on("mouseover", function() {
+                    d3.select(this).transition().duration(200).attr("r", 15).style("fill", "orange");
+                })
+                .on("mouseout", function() {
+                    d3.select(this).transition().duration(200).attr("r", 10).style("fill", "#fff");
+                });
+
+            node.append("text")
+                .attr("dy", 3)
+                .attr("x", d => d.children ? -12 : 12)
+                .style("text-anchor", d => d.children ? "end" : "start")
+                .text(d => d.data.name);
+        }
+
+        // Drag and Drop functions
+        function dragstarted(event, d) {
+            d3.select(this).raise().classed("active", true);
+        }
+
+        function dragged(event, d) {
+            d3.select(this).attr("transform", `translate(${event.y},${event.x})`);
+        }
+
+        function dragended(event, d) {
+            d3.select(this).classed("active", false);
+        }
+
+        // Sample Data for Sunburst Chart
+        const sunburstData = {
+            name: "root",
+            children: [
+                {
+                    name: "A", children: [{ name: "A1", size: 100 }, { name: "A2", size: 200 }]
+                },
+                {
+                    name: "B", children: [{ name: "B1", size: 300 }, { name: "B2", size: 400 }]
+                }
+            ]
+        };
+
+        // Draw Sunburst Chart
+        function drawSunburst() {
+            const width = 400;
+            const radius = width / 2;
+
+            const partition = d3.partition()
+                .size([2 * Math.PI, radius]);
+
+            const root = d3.hierarchy(sunburstData)
+                .sum(d => d.size);
+
+            partition(root);
+
+            const arc = d3.arc()
+                .startAngle(d => d.x0)
+                .endAngle(d => d.x1)
+                .innerRadius(d => d.y0)
+                .outerRadius(d => d.y1);
+
+            const svg = d3.select("#sunburst").selectAll("svg").data([root]);
+            const svgEnter = svg.enter().append("svg")
+                .attr("width", width)
+                .attr("height", width)
+                .append("g")
+                .attr("transform", `translate(${width / 2},${width / 2})`);
+
+            svg.exit().remove();
+
+            svgEnter.selectAll("path")
+                .data(root.descendants())
+                .enter().append("path")
+                .attr("d", arc)
+                .style("fill", d => d.children ? d3.schemeCategory10[d.depth % 10] : "#ccc")
+                .style("stroke", "#fff")
+                .on("mouseover", function() {
+                    d3.select(this).transition().duration(200).style("opacity", 0.7);
+                })
+                .on("mouseout", function() {
+                    d3.select(this).transition().duration(200).style("opacity", 1);
+                });
+        }
+
+        // Sample Data for Bar Chart
+        const barData = [
+            { category: "A", value: 30 },
+            { category: "B", value: 80 },
+            { category: "C", value: 45 },
+            { category: "D", value: 60 },
+            { category: "E", value: 20 },
+            { category: "F", value: 90 },
+            { category: "G", value: 55 },
+        ];
+
+        // Draw Bar Chart
+        function drawBarChart(data) {
+            const margin = { top: 20, right: 20, bottom: 30, left: 40 },
+                width = 400 - margin.left - margin.right,
+                height = 300 - margin.top - margin.bottom;
+
+            const svg = d3.select("#bar-chart").selectAll("svg").data([data]);
+            const svgEnter = svg.enter().append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            svg.exit().remove();
+
+            const x = d3.scaleBand()
+                .domain(data.map(d => d.category))
+                .range([0, width])
+                .padding(0.1);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value)])
+                .nice()
+                .range([height, 0]);
+
+            svgEnter.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x));
+
+            svgEnter.append("g")
+                .attr("class", "y axis")
+                .call(d3.axisLeft(y));
+
+            svgEnter.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.category))
+                .attr("y", d => y(d.value))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d.value))
+                .style("fill", "steelblue")
+                .on("mouseover", function() {
+                    d3.select(this).transition().duration(200).style("fill", "orange");
+                })
+                .on("mouseout", function() {
+                    d3.select(this).transition().duration(200).style("fill", "steelblue");
+                });
+        }
+
+        // Sample Data for Line Chart
+        const lineData = [
+            { year: 2000, value: 100 },
+            { year: 2001, value: 120 },
+            { year: 2002, value: 130 },
+            { year: 2003, value: 150 },
+            { year: 2004, value: 160 },
+            { year: 2005, value: 180 },
+            { year: 2006, value: 190 },
+            { year: 2007, value: 210 },
+        ];
+
+        // Draw Line Chart
+        function drawLineChart(data) {
+            const margin = { top: 20, right: 20, bottom: 30, left: 40 },
+                width = 400 - margin.left - margin.right,
+                height = 300 - margin.top - margin.bottom;
+
+            const svg = d3.select("#line-chart").selectAll("svg").data([data]);
+            const svgEnter = svg.enter().append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            svg.exit().remove();
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.year))
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value)])
+                .range([height, 0]);
+
+            svgEnter.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x));
+
+            svgEnter.append("g")
+                .attr("class", "y axis")
+                .call(d3.axisLeft(y));
+
+            const line = d3.line()
+                .x(d => x(d.year))
+                .y(d => y(d.value));
+
+            svgEnter.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line)
+                .style("fill", "none")
+                .style("stroke", "steelblue");
+
+            svgEnter.selectAll(".dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => x(d.year))
+                .attr("cy", d => y(d.value))
+                .attr("r", 5)
+                .style("fill", "steelblue")
+                .on("mouseover", function() {
+                    d3.select(this).transition().duration(200).attr("r", 8);
+                })
+                .on("mouseout", function() {
+                    d3.select(this).transition().duration(200).attr("r", 5);
+                });
+        }
+
+        // Sample Data for Pie Chart
+        const pieData = [
+            { category: "A", value: 30 },
+            { category: "B", value: 80 },
+            { category: "C", value: 45 },
+            { category: "D", value: 60 },
+            { category: "E", value: 20 },
+            { category: "F", value: 90 },
+            { category: "G", value: 55 },
+        ];
+
+        // Draw Pie Chart
+        function drawPieChart(data) {
+            const width = 400,
+                height = 400,
+                radius = Math.min(width, height) / 2;
+
+            const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const pie = d3.pie()
+                .value(d => d.value);
+
+            const arc = d3.arc()
+                .innerRadius(0)
+                .outerRadius(radius);
+
+            const svg = d3.select("#pie-chart").selectAll("svg").data([data]);
+            const svgEnter = svg.enter().append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2},${height / 2})`);
+
+            svg.exit().remove();
+
+            const g = svgEnter.selectAll(".arc")
+                .data(pie(data))
+                .enter().append("g")
+                .attr("class", "arc");
+
+            g.append("path")
+                .attr("d", arc)
+                .style("fill", d => color(d.data.category));
+
+            g.append("text")
+                .attr("transform", d => `translate(${arc.centroid(d)})`)
+                .attr("dy", ".35em")
+                .text(d => d.data.category);
+        }
+
+        // Initial Tab Display
+        showTab('org-tree');
+    </script>
+</body>
+</html>

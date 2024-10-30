@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treemap</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <svg width="600" height="400"></svg>
+    <script>
+        const data = {
+            name: "root",
+            children: [
+                { name: "A", size: 100 },
+                { name: "B", size: 300 },
+                { name: "C", size: 200 },
+                { name: "D", size: 150 },
+                { name: "E", size: 250 }
+            ]
+        };
+
+        const svg = d3.select("svg"),
+              width = +svg.attr("width"),
+              height = +svg.attr("height");
+
+        const treemap = d3.treemap().size([width, height]).padding(1);
+        const root = d3.hierarchy(data).sum(d => d.size);
+        treemap(root);
+
+        svg.selectAll("rect").data(root.leaves()).enter().append("rect")
+            .attr("x", d => d.x0).attr("y", d => d.y0)
+            .attr("width", d => d.x1 - d.x0).attr("height", d => d.y1 - d.y0)
+            .attr("fill", "steelblue");
+
+        svg.selectAll("text").data(root.leaves()).enter().append("text")
+            .attr("x", d => d.x0 + 5).attr("y", d => d.y0 + 20)
+            .text(d => d.data.name);
+    </script>
+</body>
+</html>

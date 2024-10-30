@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Radar Chart</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+
+    <body>
+        <svg width="400" height="400"></svg>
+        <script>
+            const data = [
+                { axis: "A", value: 4 },
+                { axis: "B", value: 5 },
+                { axis: "C", value: 3 },
+                { axis: "D", value: 2 },
+                { axis: "E", value: 4 }
+            ];
+            const svg = d3.select("svg");
+            const width = +svg.attr("width"), height = +svg.attr("height");
+            const radius = Math.min(width, height) / 2;
+
+            const angleSlice = (Math.PI * 2) / data.length;
+            const radarLine = d3.lineRadial().angle((d, i) => i * angleSlice).radius(d => d.value * (radius / 5));
+
+            const g = svg.append("g").attr("transform", `translate(${width / 2}, ${height / 2})`);
+            g.append("path").datum(data).attr("d", radarLine).attr("fill", "steelblue").attr("opacity", 0.5);
+
+            data.forEach((d, i) => {
+                g.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", 0)
+                    .attr("x2", radius * (d.value / 5) * Math.cos(angleSlice * i - Math.PI / 2))
+                    .attr("y2", radius * (d.value / 5) * Math.sin(angleSlice * i - Math.PI / 2))
+                    .attr("stroke", "black");
+            });
+        </script>
+    </body>
+
+</html>

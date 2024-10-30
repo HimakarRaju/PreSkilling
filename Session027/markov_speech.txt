@@ -1,0 +1,57 @@
+import numpy as np
+from hmmlearn import hmm
+import matplotlib.pyplot as plt
+
+# Define the words we want to recognize
+words = ["hello", "yes", "no"]
+num_states = 3  # Number of hidden states in HMM
+
+# Generate synthetic training data for each word
+def generate_synthetic_data(word, num_samples=50):
+    if word == "hello":
+        return np.random.normal(loc=[0, 0], scale=1, size=(num_samples, 2))
+    elif word == "yes":
+        return np.random.normal(loc=[5, 5], scale=1, size=(num_samples, 2))
+    elif word == "no":
+        return np.random.normal(loc=[10, 0], scale=1, size=(num_samples, 2))
+
+# Prepare the training data for the HMM
+X_train = np.vstack([generate_synthetic_data(word) for word in words])
+lengths = [50] * len(words)  # Each word has 50 samples
+
+# Create and train the HMM for each word
+models = {}
+for word in words:
+    model = hmm.GaussianHMM(n_components=num_states, covariance_type="full", n_iter=100)
+    model.fit(generate_synthetic_data(word, num_samples=50), lengths=[50])
+    models[word] = model
+
+# Function to recognize a spoken word (given synthetic data)
+def recognize_word(data):
+    best_word = None
+    best_score = -np.inf
+
+    for word, model in models.items():
+        score = model.score(data)
+        print(f"Score for '{word}': {score}")
+
+        if score > best_score:
+            best_score = score
+            best_word = word
+
+    return best_word
+
+# Simulate a test input (for instance, the word "hello")
+test_input = generate_synthetic_data("hello", num_samples=50)
+
+# Recognize the word
+recognized_word = recognize_word(test_input)
+print(f"Recognized word: {recognized_word}")
+
+# Plot the test input data
+plt.scatter(test_input[:, 0], test_input[:, 1], label='Test Input Data', color='blue')
+plt.title("Test Input Data (Synthetic)")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.legend()
+plt.show()

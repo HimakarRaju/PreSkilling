@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title></title>
+		<meta name="description" content="" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="../static/style.css" />
+	</head>
+	<body>
+		<h1>Dataset viewer</h1>
+
+		{% for filename, dataset in datasets.items() %}
+
+		<h2>Dataset Name : {{ filename }}</h2>
+		<div class="section">
+			<p class="header">
+				columns:
+				<span> {{ dataset.columns | join(', ')}} </span>
+			</p></div
+		>
+
+		<div class="section">
+			<p class="header">
+				Numeric columns:
+				<span> {{ dataset.numerical | join(', ')}} </span>
+			</p></div
+		>
+
+		<div class="section">
+			<p class="header">
+				Categorical columns:
+				<span> {{ dataset.categorical | join(', ')}} </span>
+			</p></div
+		>
+		<table>
+			<tr>
+				{% for col in dataset.columns %}
+				<th>{{ col }}</th>
+				{% endfor %}
+			</tr>
+			{% for row in dataset.data[:10] %}
+			<tr>
+				{% for col in dataset.columns %}
+				<td>{{ row[col] }}</td>
+				{% endfor %}
+			</tr>
+			{% endfor %}
+		</table>
+		<br />
+		<form action="/plot" method="POST">
+			<input type="hidden" value="{{filename}}" />
+			<label for="x_axis"> X Axis : </label>
+			<select id="x_axis" name="x_axis">
+				{%for column in dataset.numerical%}
+				<option value="{{column}}">{{column}}</option>
+				{%endfor%}
+			</select>
+
+			<label for="y_axis"> X Axis : </label>
+			<select id="y_axis" name="y_axis">
+				{%for column in dataset.numerical%}
+				<option value="{{column}}">{{column}}</option>
+				{%endfor%}
+			</select>
+			<button type="submit"> Generate Plot </button>
+		</form>
+
+		<div id="plot-area"></div>
+
+		<label for="chartType">Choose Chart Type:</label>
+		<select id="chartType">
+			<option value="bar">Bar Chart</option>
+			<option value="line">Line Chart</option>
+			<option value="pie">Pie Chart</option>
+			<option value="scatter">Scatter Plot</option>
+			<option value="area">Area Chart</option>
+			<option value="tree">Organizational Tree</option>
+			<!-- Added for Tree Chart -->
+		</select>
+
+		<label for="colorScheme">Choose Color Scheme:</label>
+		<select id="colorScheme">
+			<option value="schemeCategory10">Category 10</option>
+			<option value="schemeAccent">Accent</option>
+			<option value="schemeSet2">Set 2</option>
+			<option value="schemeDark2">Dark 2</option>
+		</select>
+
+		<button id="drawChart">Draw Chart</button>
+
+		<div class="chart" id="chart"></div>
+
+		{%endfor%}
+		<script src="../static/d3.v7.min.js" async defer></script>
+		<script>
+			const plottingData = {{plot_data}}
+
+			         const x_axis
+			         const y_axis
+
+			         const width = 928;
+			         const height = 500;
+			         const marginTop = 30;
+			         const marginRight = 0;
+			         const marginBottom = 30;
+			         const marginLeft = 40;
+		</script>
+	</body>
+</html>

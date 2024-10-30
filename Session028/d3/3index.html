@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>D3.js Animated Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        svg {
+            border: 1px solid #ccc;
+        }
+        .bar {
+            fill: steelblue;
+            transition: fill 0.3s ease;
+        }
+        .bar:hover {
+            fill: orange;
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            shape-rendering: crispEdges;
+        }
+    </style>
+</head>
+<body>
+    <h1>D3.js Bar Chart with Animation</h1>
+    <button id="update-button">Update Data</button>
+    <svg width="600" height="400"></svg>
+
+    <script>
+        const svg = d3.select("svg");
+        const margin = {top: 20, right: 30, bottom: 30, left: 40};
+        const width = +svg.attr("width") - margin.left - margin.right;
+        const height = +svg.attr("height") - margin.top - margin.bottom;
+
+        const x = d3.scaleBand().range([0, width]).padding(0.1);
+        const y = d3.scaleLinear().range([height, 0]);
+
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+        let data = [4, 8, 15, 16, 23, 42];
+
+        function update(data) {
+            x.domain(data.map((d, i) => i));
+            y.domain([0, d3.max(data)]);
+
+            // Update the x-axis
+            g.selectAll(".axis--x").remove();
+            g.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).tickFormat(d => `Bar ${d + 1}`));
+
+            // Update the y-axis
+            g.selectAll(".axis--y").remove();
+            g.append("g")
+                .attr("class", "axis axis--y")
+                .call(d3.axisLeft(y));
+
+            // Bind the data to the bars
+            const bars = g.selectAll(".bar").data(data);
+
+            // Enter new bars
+            bars.enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", (d, i) => x(i))
+                .attr("y", height)
+                .attr("width", x.bandwidth())
+                .attr("height", 0)
+                .transition() // Animate new bars
+                .duration(750)
+                .attr("y", d => y(d))
+                .attr("height", d => height - y(d));
+
+            // Update existing bars
+            bars.transition() // Animate existing bars
+                .duration(750)
+                .attr("y", d => y(d))
+                .attr("height", d => height - y(d));
+
+            // Remove old bars
+            bars.exit().transition() // Animate exit
+                .duration(750)
+                .attr("height", 0)
+                .attr("y", height)
+                .remove();
+        }
+
+        // Initial render
+        update(data);
+
+        // Update data on button click
+        document.getElementById("update-button").addEventListener("click", () => {
+            // Randomize data
+            data = data.map(() => Math.floor(Math.random() * 50) + 1);
+            update(data);
+        });
+    </script>
+</body>
+</html>

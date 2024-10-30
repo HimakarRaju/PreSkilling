@@ -1,0 +1,38 @@
+import speech_recognition as sr
+
+# Initialize the recognizer
+recognizer = sr.Recognizer()
+
+# Define the words we want to recognize
+target_words = ["hello", "yes", "no"]
+
+# Function to recognize spoken words
+def recognize_from_mic():
+    with sr.Microphone() as source:
+        print("Please say something...")
+
+        # Adjust for ambient noise and record audio
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+
+        try:
+            # Use Google Web Speech API to recognize the audio
+            recognized_text = recognizer.recognize_google(audio)
+            print(f"You said: '{recognized_text}'")
+            return recognized_text.lower()
+        except sr.UnknownValueError:
+            print("Sorry, I could not understand the audio.")
+            return None
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition service; {e}")
+            return None
+
+# Main loop to keep recognizing speech
+if __name__ == "__main__":
+    print("Real-time Speech Recognition")
+    while True:
+        recognized_word = recognize_from_mic()
+        if recognized_word:
+            for word in target_words:
+                if word in recognized_word:
+                    print(f"Recognized word: '{word}'")

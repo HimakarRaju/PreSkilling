@@ -1,0 +1,34 @@
+import numpy as np
+
+states=["drive","service","retired"]
+current_state="drive"
+transition_matrix=[
+                 [0.7 , 0.3, 0.0],
+                 [0.25, 0.5, 0.25],
+                 [0.0, 0.0, 1.0]
+]
+
+steps=35
+
+print(f"starting state: {current_state}")
+print("\ntransition_matrix")
+for i, row in enumerate(transition_matrix):
+    print(f"{states[i]} -> drive: {row[0]}, service: {row[1]}, retired: {row[2]}")
+    
+for step in range(steps):
+    print(f"\nStep {step + 1}:")
+    current_index = states.index(current_state)
+    transition_probabilities = transition_matrix[current_index]
+    print(f"  Current State: {current_state}")
+    print(f"  Transition Probabilities: drive: {transition_probabilities[0]}, "
+          f"service: {transition_probabilities[1]}, retired: {transition_probabilities[2]}")
+    
+    # Choose the next state based on the current state's transition probabilities
+    next_state = np.random.choice(states, p=transition_probabilities)
+    
+    print(f"  Next State: {next_state}")
+    current_state = next_state 
+    
+
+
+

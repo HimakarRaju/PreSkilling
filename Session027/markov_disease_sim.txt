@@ -1,0 +1,88 @@
+import numpy as np
+import pandas as pd
+
+# Define conditions and health states for each
+conditions = {
+    "Cold": ["Healthy", "Mild", "Severe", "Recovery"],
+    "Hay Fever": ["Healthy", "Mild", "Severe", "Recovery"],
+    "Blood Cancer": ["Healthy", "Stable", "Worsening", "Terminal"],
+    "Diabetes": ["Healthy", "Prediabetic", "Diabetic", "Controlled"]
+}
+
+# Define transition probabilities for each condition and state
+# Each row represents the probabilities of transitioning from one state to others
+transition_probabilities = {
+    "Cold": np.array([
+        [0.8, 0.15, 0.05, 0.0],  # Healthy -> Healthy, Mild, Severe, Recovery
+        [0.0, 0.7, 0.2, 0.1],    # Mild -> Healthy, Mild, Severe, Recovery
+        [0.0, 0.1, 0.6, 0.3],    # Severe -> Healthy, Mild, Severe, Recovery
+        [0.9, 0.05, 0.0, 0.05]   # Recovery -> Healthy, Mild, Severe, Recovery
+    ]),
+    "Hay Fever": np.array([
+        [0.85, 0.1, 0.05, 0.0],
+        [0.1, 0.75, 0.1, 0.05],
+        [0.0, 0.2, 0.6, 0.2],
+        [0.9, 0.05, 0.0, 0.05]
+    ]),
+    "Blood Cancer": np.array([
+        [0.85, 0.1, 0.05, 0.0],
+        [0.0, 0.7, 0.2, 0.1],
+        [0.0, 0.15, 0.65, 0.2],
+        [0.0, 0.0, 0.0, 1.0]
+    ]),
+    "Diabetes": np.array([
+        [0.9, 0.1, 0.0, 0.0],
+        [0.0, 0.8, 0.15, 0.05],
+        [0.0, 0.0, 0.8, 0.2],
+        [0.5, 0.0, 0.0, 0.5]
+    ])
+}
+
+# Simulation parameters
+num_simulations = 100  # Number of simulations to run
+num_steps = 60        # Number of time steps to simulate (e.g., months)
+
+# Initialize results dictionary
+results = {condition: [] for condition in conditions}
+
+# Function to simulate disease progression for a given condition
+def simulate_condition_progression(condition):
+    states = conditions[condition]
+    transition_matrix = transition_probabilities[condition]
+    initial_state = 0  # Start with the first state, "Healthy"
+    state_counts = np.zeros((num_steps, len(states)))
+
+    # Run simulation
+    current_state = initial_state
+    for step in range(num_steps):
+        state_counts[step, current_state] += 1
+        next_state = np.random.choice(range(len(states)), p=transition_matrix[current_state])
+        current_state = next_state
+    
+    # Aggregate state counts and return as a DataFrame
+    df = pd.DataFrame(state_counts, columns=states)
+    return df
+
+# Run simulations and collect results
+for condition in conditions:
+    condition_results = pd.concat([simulate_condition_progression(condition) for _ in range(num_simulations)])
+    avg_condition_results = condition_results.groupby(level=0).mean()  # Average results across simulations
+    results[condition] = avg_condition_results
+
+# Plotting results for each condition
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+axes = axes.ravel()  # Flatten axes for easy iteration
+
+for i, condition in enumerate(results):
+    ax = axes[i]
+    avg_condition_results = results[condition]
+    avg_condition_results.plot(ax=ax)
+    ax.set_title(f"Disease Progression - {condition}")
+    ax.set_xlabel("Time Steps")
+    ax.set_ylabel("Average Number of Individuals in State")
+    ax.legend(title="Health State")
+
+plt.tight_layout()
+plt.show()

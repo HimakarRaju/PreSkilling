@@ -1,0 +1,89 @@
+import csv
+import random
+import datetime
+from geopy.distance import geodesic
+
+# Define the CSV file path
+CSV_FILE = "marine_animal_tracking_markov.csv"
+
+# Define possible zones with coordinates and transition probabilities
+zones = {
+    "Zone1": {"coords": (25.7617, -80.1918), "transitions": {"Zone1": 0.6, "Zone2": 0.3, "Zone3": 0.1}},
+    "Zone2": {"coords": (26.141, -81.379), "transitions": {"Zone1": 0.3, "Zone2": 0.5, "Zone3": 0.2}},
+    "Zone3": {"coords": (25.788, -80.226), "transitions": {"Zone1": 0.2, "Zone2": 0.2, "Zone3": 0.6}}
+}
+
+# Define animals with starting zones
+animals = {"Dolphin": "Zone1", "Shark": "Zone2", "Whale": "Zone3", "Seal": "Zone1"}
+
+# Generate mock data using Markov Chain for tracking
+def generate_markov_data(num_entries=500):
+    # Define CSV header
+    header = ["AnimalID", "Timestamp", "Latitude", "Longitude", "Status"]
+
+    with open(CSV_FILE, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        
+        # Generate data for each animal
+        for _ in range(num_entries):
+            for animal, current_zone in animals.items():
+                # Select the next zone based on transition probabilities
+                next_zone = select_next_zone(current_zone)
+                animals[animal] = next_zone  # Update current zone
+                coords = zones[next_zone]["coords"]
+                timestamp = datetime.datetime.now().isoformat()
+                status = random.choice(["Healthy", "Minor Injury", "Critical"])
+                writer.writerow([animal, timestamp, coords[0], coords[1], status])
+
+# Function to select the next zone based on transition probabilities
+def select_next_zone(current_zone):
+    transitions = zones[current_zone]["transitions"]
+    zones_list, probabilities = zip(*transitions.items())
+    return random.choices(zones_list, probabilities)[0]
+
+# Load tracking data from CSV
+def load_data():
+    data = []
+    with open(CSV_FILE, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row)
+    return data
+
+# Display current locations of all tracked animals
+def display_current_locations():
+    data = load_data()
+    print("Current Locations:")
+    for entry in data:
+        print(f"{entry['AnimalID']} - Location: ({entry['Latitude']}, {entry['Longitude']}) - Status: {entry['Status']}")
+
+# Get history of a specific animal's movements
+def get_animal_history(animal_id):
+    data = load_data()
+    print(f"Movement History for {animal_id}:")
+    for entry in data:
+        if entry["AnimalID"] == animal_id:
+            print(f"Timestamp: {entry['Timestamp']} - Location: ({entry['Latitude']}, {entry['Longitude']}) - Status: {entry['Status']}")
+
+# Calculate distance traveled by an animal
+def calculate_distance_traveled(animal_id):
+    data = load_data()
+    coords = [(float(entry["Latitude"]), float(entry["Longitude"])) for entry in data if entry["AnimalID"] == animal_id]
+    
+    if len(coords) < 2:
+        print("Not enough data points for distance calculation.")
+        return
+
+    total_distance = sum(geodesic(coords[i], coords[i + 1]).km for i in range(len(coords) - 1))
+    print(f"Total distance traveled by {animal_id}: {total_distance:.2f} km")
+
+# Main function to demonstrate program functionality
+def main():
+    generate_markov_data()  # Generate mock data using Markov Chain
+    display_current_locations()  # Display current locations
+    get_animal_history("Dolphin")  # Display history for a specific animal
+    calculate_distance_traveled("Dolphin")  # Calculate distance for an animal
+
+if __name__ == "__main__":
+    main()

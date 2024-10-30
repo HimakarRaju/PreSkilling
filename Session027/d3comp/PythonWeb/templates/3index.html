@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auto-Graph Generator</title>
+    <script src="{{ url_for('static', filename='js/d3.v7.min.js') }}"></script>
+    <style>
+        #visualization svg {
+            font-family: Arial, sans-serif;
+            margin: 20px 0;
+        }
+        .axis text {
+            font-size: 12px;
+        }
+        .axis path, .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Select Dataset</h1>
+        <select id="dataset-select">
+            <option value="">--Select a Dataset--</option>
+            {% for dataset in datasets %}
+            <option value="{{ dataset }}">{{ dataset }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <button id="visualize-btn">Auto Generate Charts</button>
+    </div>
+
+    <div id="visualization"></div>
+
+    <script>
+        document.getElementById('visualize-btn').addEventListener('click', () => {
+            const selectedFile = document.getElementById('dataset-select').value;
+
+            if (!selectedFile) return alert("Select a dataset");
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `file_name=${selectedFile}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                d3.select("#visualization").html("");  // Clear previous chart
+
+                const numericColumns = data.columns.filter((col, idx) => 
+                    data.types[idx] === 'float64' || data.types[idx] === 'int64');
+                const categoricalColumns = data.columns.filter((col, idx) => 
+                    data.types[idx] === 'object');
+
+                // Plot based on data analysis
+                if (numericColumns.length >= 2) {
+                    createScatterPlot(data.sample_data, numericColumns[0], numericColumns[1]);
+                }
+                if (categoricalColumns.length >= 1 && numericColumns.length >= 1) {
+                    createBarChart(data.sample_data, categoricalColumns[0], numericColumns[0]);
+                }
+                if (categoricalColumns.length === 1) {
+                    createPieChart(data.sample_data, categoricalColumns[0]);
+                }
+                if (numericColumns.length === 1) {
+                    createHistogram(data.sample_data, numericColumns[0]);
+                }
+            });
+        });
+
+        function createScatterPlot(data, xCol, yCol) {
+            const svg = d3.select("#visualization").append("svg").attr("width", 500).attr("height", 300);
+            const x = d3.scaleLinear().domain([0, d3.max(data, d => d[xCol])]).range([50, 450]);
+            const y = d3.scaleLinear().domain([0, d3.max(data, d => d[yCol])]).range([250, 50]);
+
+            svg.append("g")
+                .attr("transform", "translate(0,250)")
+                .call(d3.axisBottom(x));
+            svg.append("g")
+                .attr("transform", "translate(50,0)")
+                .call(d3.axisLeft(y));
+
+            svg.selectAll("circle")
+                .data(data)
+                .enter().append("circle")
+                .attr("cx", d => x(d[xCol]))
+                .attr("cy", d => y(d[yCol]))
+                .attr("r", 5)
+                .attr("fill", "blue");
+        }
+
+        function createBarChart(data, catCol, numCol) {
+            const svg = d3.select("#visualization").append("svg").attr("width", 500).attr("height", 300);
+            const x = d3.scaleBand().domain(data.map(d => d[catCol])).range([50, 450]).padding(0.1);
+            const y = d3.scaleLinear().domain([0, d3.max(data, d => d[numCol])]).range([250, 50]);
+
+            svg.append("g")
+                .attr("transform", "translate(0,250)")
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+            svg.append("g")
+                .attr("transform", "translate(50,0)")
+                .call(d3.axisLeft(y));
+
+            svg.selectAll("rect")
+                .data(data)
+                .enter().append("rect")
+                .attr("x", d => x(d[catCol]))
+                .attr("y", d => y(d[numCol]))
+                .attr("width", x.bandwidth())
+                .attr("height", d => 250 - y(d[numCol]))
+                .attr("fill", "green");
+        }
+
+        function createPieChart(data, catCol) {
+            const svg = d3.select("#visualization").append("svg").attr("width", 500).attr("height", 300);
+            const radius = 100;
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const arc = d3.arc().innerRadius(0).outerRadius(radius);
+            const pie = d3.pie().value(d => 1);
+
+            const arcs = svg.selectAll("g.arc")
+                .data(pie(data))
+                .enter().append("g")
+                .attr("class", "arc")
+                .attr("transform", "translate(250,150)");
+
+            arcs.append("path")
+                .attr("fill", d => colorScale(d.data[catCol]))
+                .attr("d", arc);
+
+            arcs.append("text")
+                .attr("transform", d => "translate(" + arc.centroid(d) + ")")
+                .attr("dy", "0.35em")
+                .text(d => d.data[catCol]);
+        }
+
+        function createHistogram(data, numCol) {
+            const svg = d3.select("#visualization").append("svg").attr("width", 500).attr("height", 300);
+            const x = d3.scaleLinear().domain([0, d3.max(data, d => d[numCol])]).range([50, 450]);
+            const histogram = d3.histogram().value(d => d[numCol]).thresholds(x.ticks(10));
+            const bins = histogram(data);
+            const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([250, 50]);
+
+            svg.append("g")
+                .attr("transform", "translate(0,250)")
+                .call(d3.axisBottom(x));
+            svg.append("g")
+                .attr("transform", "translate(50,0)")
+                .call(d3.axisLeft(y));
+
+            svg.selectAll("rect")
+                .data(bins)
+                .enter().append("rect")
+                .attr("x", d => x(d.x0) + 1)
+                .attr("y", d => y(d.length))
+                .attr("width", d => x(d.x1) - x(d.x0) - 1)
+                .attr("height", d => 250 - y(d.length))
+                .attr("fill", "purple");
+        }
+    </script>
+</body>
+</html>

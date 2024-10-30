@@ -1,0 +1,36 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: antiquewhite;
+    margin: 20px;
+}
+
+.tabs {
+    margin-bottom: 20px;
+}
+
+.tablinks {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.tabcontent {
+    display: none;
+    border: 1px solid #ccc;
+    padding: 15px;
+}
+
+.tabcontent h3 {
+    margin-top: 0;
+}
+
+th,
+td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+.header {
+    font-weight: bold;
+    color: teal;
+}

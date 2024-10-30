@@ -1,0 +1,37 @@
+import numpy as np
+
+# Define the states and the transition matrix
+states = ["Sunny", "Cloudy", "Rainy"]
+
+# Transition matrix where each row represents the current state and each column the next state
+# Rows: Sunny, Cloudy, Rainy
+# Columns: Sunny, Cloudy, Rainy
+transition_matrix = [
+    [0.8, 0.1, 0.1],   # Probabilities from Sunny
+    [0.3, 0.4, 0.3],   # Probabilities from Cloudy
+    [0.2, 0.3, 0.5]    # Probabilities from Rainy
+]
+
+# Initial state
+current_state = "Sunny"
+steps = 15 # Number of steps to simulate
+
+print(f"Starting state: {current_state}")
+print("\nTransition Matrix:")
+for i, row in enumerate(transition_matrix):
+    print(f"{states[i]} -> Sunny: {row[0]}, Cloudy: {row[1]}, Rainy: {row[2]}")
+
+# Simulation of Markov Chain steps with detailed explanation
+for step in range(steps):
+    print(f"\nStep {step + 1}:")
+    current_index = states.index(current_state)
+    transition_probabilities = transition_matrix[current_index]
+    print(f"  Current State: {current_state}")
+    print(f"  Transition Probabilities: Sunny: {transition_probabilities[0]}, "
+          f"Cloudy: {transition_probabilities[1]}, Rainy: {transition_probabilities[2]}")
+    
+    # Choose the next state based on the current state's transition probabilities
+    next_state = np.random.choice(states, p=transition_probabilities)
+    
+    print(f"  Next State: {next_state}")
+    current_state = next_state  # Move to the next state for the next step

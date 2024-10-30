@@ -1,0 +1,29 @@
+import numpy as np
+
+#This is what we observed as the sequence of transistions
+transistions = [
+               ("SW","AM"),("SW","FM"),("SW","ON"),("AM","VOL+"),("FM","AM"),
+               ("ON","VOL+"),("VOL+","VOL-"),("VOL-","OFF"),("OFF","ON"),("ON","OFF")
+]
+states = ["SW","AM","FM","On","Off","Vol+","Vol-"]
+trans_counts = defaultdict(lambda:defaultdict(int))
+#Count all the transitions in the data set ..
+for (from_state, to_state) in transistions:
+    if from_state in states and to_state in states:
+       trans_counts[from_state,to_state]+= 1
+    else:
+        print(f"Unknown Transition from {from_state} to {to_state}")
+#Convert these counts into probabilities
+trans_mat=[]
+for state in states:
+    row=[]
+    total_trans = sum(trans_counts[state].values())
+    for to_state in states:
+        #Probability of transitioning to the target
+        state from the current_state (state)
+                probability = trans_counts[state][to_state]/total_trans if total_trans > 0 else 0
+                row.append(probability)
+            trans_mat.append(row)
+        trans_mat = np.array(trans_mat)
+        print("Transition Matrix:")
+        print (trans_mat)

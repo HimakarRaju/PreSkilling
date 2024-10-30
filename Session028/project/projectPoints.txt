@@ -1,0 +1,15 @@
+1 be completely thorough with the code 
+2 Make a complete flow chart to explain the logic 
+3 Make a clear presentation 
+4 Understand the basics of Python 
+5 Know your terms & terminologies 
+6 Speak Proper language slowly clearly & firmly 
+7 Create a script from start to end for the presentation 
+8 Don't guess, if you don't know  say i don't No
+9 I will learn it & work on it
+10 Remember Statistical terms & techniques with concepts 
+
+ 
+
+
+bokeh serve --show pybokeh.py  --args g:\python

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sankey Diagram</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.css">
+    </head>
+
+    <body>
+        <svg width="600" height="400"></svg>
+        <script>
+            const data = {
+                nodes: [
+                    { name: "Node1" }, { name: "Node2" },
+                    { name: "Node3" }, { name: "Node4" }
+                ],
+                links: [
+                    { source: 0, target: 1, value: 10 },
+                    { source: 0, target: 2, value: 20 },
+                    { source: 1, target: 3, value: 10 },
+                    { source: 2, target: 3, value: 30 }
+                ]
+            };
+
+            const svg = d3.select("svg"),
+                width = +svg.attr("width"),
+                height = +svg.attr("height");
+            const sankey = d3.sankey().nodeWidth(20).extent([[1, 1], [width - 1, height - 5]]);
+            const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const { nodes, links } = sankey(data);
+
+            svg.append("g").selectAll(".link").data(links).enter().append("path")
+                .attr("class", "link")
+                .attr("d", d3.sankeyLinkHorizontal())
+                .attr("fill", "none")
+                .attr("stroke", d => color(d.source.name))
+                .attr("stroke-width", d => Math.max(1, d.width));
+
+            svg.append("g").selectAll(".node").data(nodes).enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+            svg.selectAll(".node").append("rect")
+                .attr("x", 0)
+                .attr("y", d => d.y0)
+                .attr("height", d => d.y1 - d.y0)
+                .attr("width", sankey.nodeWidth())
+                .attr("fill", d => color(d.name))
+                .attr("stroke", "black");
+            svg.selectAll(".node").append("text")
+                .attr("x", -6)
+                .attr("y", d => (d.y1 + d.y0) / 2)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "end")
+                .text(d => d.name);
+        </script>
+    </body>
+
+</html>
